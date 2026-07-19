@@ -10,8 +10,7 @@ export default auth((req) => {
   const { pathname } = req.nextUrl;
   const session = req.auth;
 
-  const isPublic =
-    pathname === '/' || PUBLIC_PATHS.some((p) => pathname.startsWith(p));
+  const isPublic = PUBLIC_PATHS.some((p) => pathname.startsWith(p));
 
   if (!session && !isPublic) {
     const loginUrl = new URL('/login', req.nextUrl);
