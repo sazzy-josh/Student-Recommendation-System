@@ -1,8 +1,12 @@
-export const dynamic = 'force-dynamic';
+'use client';
 
-import { notFound } from 'next/navigation';
+import { useParams } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
+import { coursesApi } from '@/lib/api';
+import { CourseDetail, CourseActivity } from '@/types';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   BookOpen,
   Award,
@@ -13,20 +17,8 @@ import {
   ClipboardList,
   HelpCircle,
   ChevronLeft,
+  AlertCircle,
 } from 'lucide-react';
-import { CourseDetail, CourseActivity } from '@/types';
-
-async function getCourse(id: string): Promise<CourseDetail | null> {
-  try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/courses/${id}/`, {
-      cache: 'no-store',
-    });
-    if (!res.ok) return null;
-    return res.json();
-  } catch {
-    return null;
-  }
-}
 
 const ACTIVITY_ICONS: Record<CourseActivity['activity_type'], typeof FileText> = {
   page: FileText,
@@ -42,18 +34,107 @@ const ACTIVITY_COLORS: Record<CourseActivity['activity_type'], string> = {
   url: 'text-green-600 bg-green-50',
 };
 
-export default async function CourseDetailPage({ params }: { params: { id: string } }) {
-  const course = await getCourse(params.id);
-  if (!course) notFound();
+function Skeleton({ className }: { className?: string }) {
+  return <div className={`animate-pulse rounded bg-muted ${className}`} />;
+}
+
+function LoadingState() {
+  return (
+    <div className="p-6 max-w-4xl mx-auto">
+      <Skeleton className="h-4 w-32 mb-6" />
+      <div className="bg-white rounded-xl border p-6 mb-6">
+        <Skeleton className="h-3 w-16 mb-2" />
+        <Skeleton className="h-9 w-2/3 mb-4" />
+        <div className="flex gap-4">
+          <Skeleton className="h-4 w-20" />
+          <Skeleton className="h-4 w-28" />
+          <Skeleton className="h-4 w-24" />
+        </div>
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-4">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="bg-white rounded-xl border overflow-hidden">
+              <div className="px-5 py-4 border-b">
+                <Skeleton className="h-5 w-48 mb-1" />
+                <Skeleton className="h-3 w-64" />
+              </div>
+              {[0, 1, 2].map((j) => (
+                <div key={j} className="flex items-center gap-3 px-5 py-3 border-b last:border-0">
+                  <Skeleton className="h-7 w-7 rounded-md flex-shrink-0" />
+                  <Skeleton className="h-4 flex-1" />
+                  <Skeleton className="h-5 w-20" />
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+        <div className="space-y-4">
+          <div className="bg-white rounded-xl border p-5">
+            <Skeleton className="h-5 w-32 mb-3" />
+            <Skeleton className="h-3 w-full mb-1" />
+            <Skeleton className="h-3 w-5/6 mb-1" />
+            <Skeleton className="h-3 w-4/6" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function CourseDetailPage() {
+  const params = useParams();
+  const id = Number(params.id);
+
+  const { data: course, isLoading, error, refetch } = useQuery<CourseDetail>({
+    queryKey: ['course', id],
+    queryFn: async () => {
+      const res = await coursesApi.get(id);
+      return res.data;
+    },
+    enabled: !!id,
+  });
+
+  if (isLoading) return <LoadingState />;
+
+  if (error || !course) {
+    return (
+      <div className="p-6 max-w-4xl mx-auto">
+        <Link
+          href="/catalog"
+          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6"
+        >
+          <ChevronLeft className="h-4 w-4" /> Back to Catalog
+        </Link>
+        <div className="bg-white rounded-xl border p-10 text-center shadow-sm">
+          <AlertCircle className="h-10 w-10 text-destructive mx-auto mb-4 opacity-60" />
+          <h2 className="text-lg font-semibold mb-2">Course not found</h2>
+          <p className="text-sm text-muted-foreground mb-6">
+            This course may not exist or is temporarily unavailable.
+          </p>
+          <div className="flex gap-3 justify-center">
+            <Button variant="outline" size="sm" onClick={() => refetch()}>
+              Try again
+            </Button>
+            <Link href="/catalog">
+              <Button size="sm">Browse Catalog</Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const totalActivities =
-    course.modules?.reduce((sum, m) => sum + m.activity_count, 0) ?? 0;
+    course.modules?.reduce((sum, m) => sum + (m.activity_count ?? m.activities?.length ?? 0), 0) ?? 0;
   const totalDuration =
     course.modules?.reduce(
       (sum, m) =>
-        sum + m.activities.reduce((s, a) => s + (a.duration_minutes ?? 0), 0),
+        sum + (m.activities ?? []).reduce((s, a) => s + (a.duration_minutes ?? 0), 0),
       0
     ) ?? 0;
+
+  const deptName = typeof course.department === 'object' ? course.department?.name : course.department;
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
@@ -75,9 +156,11 @@ export default async function CourseDetailPage({ params }: { params: { id: strin
               <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                 <Award className="h-4 w-4" /> {course.credits} Credits
               </div>
-              <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                <Building className="h-4 w-4" /> {course.department?.name}
-              </div>
+              {deptName && (
+                <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                  <Building className="h-4 w-4" /> {deptName}
+                </div>
+              )}
               <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                 <BookOpen className="h-4 w-4" />
                 <span className="capitalize">{course.level}</span>
@@ -90,7 +173,6 @@ export default async function CourseDetailPage({ params }: { params: { id: strin
             </div>
           </div>
 
-          {/* Module/activity summary pill */}
           {course.modules?.length > 0 && (
             <div className="text-right text-sm">
               <p className="font-semibold">{course.modules.length} modules</p>
@@ -112,7 +194,7 @@ export default async function CourseDetailPage({ params }: { params: { id: strin
                     <div className="flex items-center justify-between">
                       <h3 className="font-semibold">{module.title}</h3>
                       <span className="text-xs text-muted-foreground">
-                        {module.activity_count} activities
+                        {module.activity_count ?? module.activities?.length ?? 0} activities
                       </span>
                     </div>
                     {module.description && (
@@ -120,7 +202,7 @@ export default async function CourseDetailPage({ params }: { params: { id: strin
                     )}
                   </div>
                   <ul className="divide-y">
-                    {module.activities.map((activity) => {
+                    {(module.activities ?? []).map((activity) => {
                       const Icon = ACTIVITY_ICONS[activity.activity_type];
                       const colorClass = ACTIVITY_COLORS[activity.activity_type];
                       return (
