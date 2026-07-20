@@ -95,3 +95,28 @@ export interface ApiError {
   detail: string | Record<string, string[]>;
   code: string;
 }
+
+export interface CourseActivity {
+  id: number;
+  title: string;
+  activity_type: 'quiz' | 'page' | 'assignment' | 'url';
+  content: string;
+  url: string;
+  order: number;
+  duration_minutes: number | null;
+}
+
+export interface CourseModule {
+  id: number;
+  title: string;
+  description: string;
+  order: number;
+  activity_count: number;
+  activities: CourseActivity[];
+}
+
+export interface CourseDetail extends Course {
+  syllabus_text_excerpt: string;
+  modules: CourseModule[];
+  prerequisites: Array<{ id: number; code: string; title: string }>;
+}
