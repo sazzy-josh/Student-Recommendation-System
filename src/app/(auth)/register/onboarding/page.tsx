@@ -85,7 +85,14 @@ export default function OnboardingPage() {
         {error && <p className="text-sm text-destructive">{error}</p>}
 
         <Button type="submit" className="w-full" disabled={isLoading}>
-          {isLoading ? 'Saving...' : 'Get My Recommendations'}
+          {isLoading ? (
+            <span className="flex items-center justify-center gap-2">
+              <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              Building your recommendations…
+            </span>
+          ) : (
+            'Get My Recommendations'
+          )}
         </Button>
       </form>
     </div>
