@@ -3,12 +3,13 @@
 import { useState } from 'react';
 import { useRecommendations } from '@/hooks/useRecommendations';
 import { useProfile } from '@/hooks/useProfile';
+import { useEnrollments } from '@/hooks/useEnrollments';
 import { RecommendationCard } from '@/components/recommendations/RecommendationCard';
 import { ColdStartBanner } from '@/components/recommendations/ColdStartBanner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { formatRelativeTime } from '@/lib/utils';
-import { RefreshCw, BookOpen, Star, TrendingUp, Clock } from 'lucide-react';
+import { RefreshCw, BookOpen, Star, TrendingUp, Clock, GraduationCap } from 'lucide-react';
 
 function SkeletonCard() {
   return (
@@ -69,6 +70,7 @@ function StatCard({
 export default function DashboardPage() {
   const { query, refreshMutation, feedbackMutation, isRefreshing } = useRecommendations();
   const profileQuery = useProfile();
+  const { query: enrollmentsQuery, enrollMutation, unenrollMutation, enrolledCourseIds } = useEnrollments();
   const [coldStartDismissed, setColdStartDismissed] = useState(false);
 
   const { data, isLoading, error } = query;
@@ -77,6 +79,7 @@ export default function DashboardPage() {
   // Derive first name from full_name
   const firstName = profile?.full_name?.split(' ')[0] ?? 'there';
   const recCount = data?.recommendations?.length ?? 0;
+  const enrolledCount = enrollmentsQuery.data?.length ?? 0;
 
   // Loading skeleton
   if (isLoading) {
@@ -148,12 +151,18 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats row */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-8">
         <StatCard
           icon={Star}
-          label="Total Recommendations"
+          label="Recommendations"
           value={recCount}
           accent="bg-amber-50 text-amber-600"
+        />
+        <StatCard
+          icon={GraduationCap}
+          label="Enrolled Courses"
+          value={enrolledCount}
+          accent="bg-emerald-50 text-emerald-600"
         />
         <StatCard
           icon={BookOpen}
@@ -165,7 +174,7 @@ export default function DashboardPage() {
           icon={Clock}
           label="Last Updated"
           value={data?.generated_at ? formatRelativeTime(data.generated_at) : undefined}
-          accent="bg-emerald-50 text-emerald-600"
+          accent="bg-violet-50 text-violet-600"
         />
       </div>
 
@@ -193,6 +202,10 @@ export default function DashboardPage() {
                 key={rec.id}
                 recommendation={rec}
                 onFeedback={(id, rating) => feedbackMutation.mutate({ id, rating })}
+                isEnrolled={enrolledCourseIds.has(rec.course.id)}
+                onEnroll={(courseId) => enrollMutation.mutate(courseId)}
+                onUnenroll={(courseId) => unenrollMutation.mutate(courseId)}
+                enrollPending={enrollMutation.isPending || unenrollMutation.isPending}
               />
             ))}
           </div>

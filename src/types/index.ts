@@ -96,6 +96,15 @@ export interface ApiError {
   code: string;
 }
 
+export interface Enrollment {
+  id: number;
+  course: number;
+  course_detail: Course;
+  grade: string | null;
+  completed_at: string | null;
+  semester: string;
+}
+
 export interface CourseActivity {
   id: number;
   title: string;

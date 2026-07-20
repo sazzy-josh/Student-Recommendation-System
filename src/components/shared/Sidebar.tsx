@@ -6,11 +6,12 @@ import { useUIStore } from '@/store/uiStore';
 import { cn } from '@/lib/utils';
 import {
   LayoutDashboard, BookOpen, User, BarChart2,
-  Settings, ChevronLeft, ChevronRight, GraduationCap,
+  Settings, ChevronLeft, ChevronRight, GraduationCap, BookMarked,
 } from 'lucide-react';
 
 const studentLinks = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/my-courses', label: 'My Courses', icon: BookMarked },
   { href: '/catalog', label: 'Course Catalog', icon: BookOpen },
   { href: '/profile', label: 'My Profile', icon: User },
 ];
