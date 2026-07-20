@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { PROGRAMS } from './constants';
+
 
 export const loginSchema = z.object({
   email: z.string().email('Enter a valid email'),
@@ -16,7 +18,9 @@ export const registerSchema = z.object({
 });
 
 export const onboardingSchema = z.object({
-  program: z.string().min(2, 'Enter your program name'),
+  program: z.enum(PROGRAMS as unknown as [string, ...string[]], {
+    errorMap: () => ({ message: 'Select your program' }),
+  }),
   level: z.enum(['undergraduate', 'postgraduate']),
   interests: z.array(z.string()).min(1, 'Select at least one interest'),
 });

@@ -5,6 +5,8 @@ import { InterestPicker } from '@/components/auth/InterestPicker';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select } from '@/components/ui/select';
+import { PROGRAMS } from '@/lib/constants';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useState, useEffect } from 'react';
 
@@ -54,7 +56,12 @@ export default function ProfilePage() {
 
         <div className="space-y-2">
           <Label>Program</Label>
-          <Input value={program} onChange={(e) => setProgram(e.target.value)} placeholder="e.g. MIT" />
+          <Select value={program} onChange={(e) => setProgram(e.target.value)}>
+            <option value="">— Select your program —</option>
+            {PROGRAMS.map((p) => (
+              <option key={p} value={p}>{p}</option>
+            ))}
+          </Select>
         </div>
 
         <div className="space-y-2">

@@ -1,0 +1,26 @@
+export const PROGRAMS = [
+  'Computer Science',
+  'Software Engineering',
+  'Data Science',
+  'Artificial Intelligence',
+  'Machine Learning',
+  'Cybersecurity',
+  'Information Technology',
+  'Mathematics',
+  'Statistics',
+  'Electrical Engineering',
+  'Electronics & Communication',
+  'Embedded Systems',
+  'Physics',
+  'Computational Physics',
+  'Business Analytics',
+  'Business Management',
+  'Digital Marketing',
+  'Finance & Economics',
+  'Psychology',
+  'Cognitive Science',
+  'Human-Computer Interaction',
+  'Other',
+] as const;
+
+export type Program = (typeof PROGRAMS)[number];

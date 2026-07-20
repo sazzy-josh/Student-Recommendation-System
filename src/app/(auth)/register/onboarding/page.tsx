@@ -5,11 +5,12 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { onboardingSchema, OnboardingFormData } from '@/lib/schemas';
+import { PROGRAMS } from '@/lib/constants';
 import { studentApi } from '@/lib/api';
 import { InterestPicker } from '@/components/auth/InterestPicker';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select } from '@/components/ui/select';
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -18,7 +19,7 @@ export default function OnboardingPage() {
 
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<OnboardingFormData>({
     resolver: zodResolver(onboardingSchema),
-    defaultValues: { program: '', level: 'undergraduate', interests: [] },
+    defaultValues: { program: '' as OnboardingFormData['program'], level: 'undergraduate', interests: [] },
   });
 
   const interests = watch('interests');
@@ -44,7 +45,12 @@ export default function OnboardingPage() {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div className="space-y-2">
           <Label htmlFor="program">Program / Degree</Label>
-          <Input id="program" placeholder="e.g. MIT, BSc Computer Science" {...register('program')} />
+          <Select id="program" {...register('program')}>
+            <option value="">— Select your program —</option>
+            {PROGRAMS.map((p) => (
+              <option key={p} value={p}>{p}</option>
+            ))}
+          </Select>
           {errors.program && <p className="text-sm text-destructive">{errors.program.message}</p>}
         </div>
 
