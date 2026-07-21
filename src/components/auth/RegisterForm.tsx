@@ -50,7 +50,13 @@ export function RegisterForm() {
 
       router.push('/register/onboarding');
     } catch (err: any) {
-      setError(err?.response?.data?.email?.[0] || 'Registration failed. Please try again.');
+      const data = err?.response?.data;
+      setError(
+        data?.email?.[0] ||
+        data?.detail ||
+        data?.non_field_errors?.[0] ||
+        'Registration failed. Please try again.'
+      );
     } finally {
       setIsLoading(false);
     }

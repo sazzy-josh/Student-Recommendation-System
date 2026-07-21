@@ -3,6 +3,12 @@ import { getSession } from 'next-auth/react';
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL!;
 
+// These endpoints are public — never attach an Authorization header and never
+// intercept their 401 responses (a stale token on /register causes the backend
+// to reject the request even though the endpoint is AllowAny).
+const PUBLIC_PATHS = ['/auth/login/', '/auth/register/', '/auth/refresh/', '/auth/logout/'];
+const isPublicPath = (url?: string) => PUBLIC_PATHS.some((p) => url?.includes(p));
+
 const api: AxiosInstance = axios.create({
   baseURL: BASE_URL,
   headers: { 'Content-Type': 'application/json' },
@@ -10,6 +16,7 @@ const api: AxiosInstance = axios.create({
 });
 
 api.interceptors.request.use(async (config) => {
+  if (isPublicPath(config.url)) return config;
   const session = await getSession();
   if (session?.accessToken) {
     config.headers.Authorization = `Bearer ${session.accessToken}`;
@@ -21,7 +28,14 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-    if (error.response?.status === 401 && !originalRequest._retry && typeof window !== 'undefined') {
+    // Don't intercept 401s from public auth endpoints — let them propagate so
+    // the calling form can show the right error message.
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      !isPublicPath(originalRequest.url) &&
+      typeof window !== 'undefined'
+    ) {
       originalRequest._retry = true;
 
       // Re-reading the session runs the NextAuth jwt callback, which refreshes
