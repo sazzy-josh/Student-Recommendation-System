@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { signIn } from 'next-auth/react';
 import { Eye, EyeOff } from 'lucide-react';
 import { registerSchema, RegisterFormData } from '@/lib/schemas';
 import { authApi } from '@/lib/api';
@@ -32,6 +33,21 @@ export function RegisterForm() {
         password: data.password,
         full_name: data.full_name,
       });
+
+      // Establish a NextAuth session immediately so the onboarding page
+      // has a valid access token when it calls PUT /students/me/.
+      const result = await signIn('credentials', {
+        email: data.email,
+        password: data.password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        setError('Account created but sign-in failed. Please log in manually.');
+        router.push('/login');
+        return;
+      }
+
       router.push('/register/onboarding');
     } catch (err: any) {
       setError(err?.response?.data?.email?.[0] || 'Registration failed. Please try again.');
