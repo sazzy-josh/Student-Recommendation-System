@@ -3,8 +3,8 @@ import { auth } from '@/lib/auth';
 
 // Route groups don't appear in URLs: student pages live at /dashboard, /catalog,
 // /profile and admin pages at /courses, /analytics, /settings.
-const PUBLIC_PATHS = ['/login', '/register'];
-const ADMIN_PATHS = ['/courses', '/analytics', '/settings'];
+const PUBLIC_PATHS = ['/login', '/register', '/admin'];
+const ADMIN_PATHS = ['/courses', '/analytics', '/settings', '/students'];
 
 export default auth((req) => {
   const { pathname } = req.nextUrl;

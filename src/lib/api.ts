@@ -118,5 +118,8 @@ export const adminApi = {
   updateSettings: (data: unknown) => api.put('/admin/settings/', data),
   retrain: () => api.post('/admin/engine/retrain/'),
   getStudents: () => api.get('/admin/students/'),
+  getStudentInteractions: (studentId: number) => api.get(`/admin/students/${studentId}/interactions/`),
+  getStudentDetail: (studentId: number) => api.get(`/admin/students/${studentId}/`),
+  getStudentEnrollments: (studentId: number) => api.get(`/admin/students/${studentId}/enrollments/`),
   getRecommendationAudit: () => api.get('/admin/analytics/recommendations/'),
 };

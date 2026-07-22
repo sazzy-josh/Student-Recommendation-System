@@ -129,3 +129,50 @@ export interface CourseDetail extends Course {
   modules: CourseModule[];
   prerequisites: Array<{ id: number; code: string; title: string }>;
 }
+
+export interface StudentSummary {
+  id: number;
+  email: string;
+  full_name: string;
+  program: string;
+  level: string;
+  interaction_count: number;
+  recommendation_count: number;
+}
+
+export interface StudentInteraction {
+  id: number;
+  course_id: number;
+  course_code: string;
+  course_title: string;
+  clicks: number;
+  time_spent_seconds: number;
+  last_accessed: string | null;
+  updated_at: string;
+}
+
+export interface StudentDetail {
+  id: number;
+  email: string;
+  full_name: string;
+  program: string;
+  level: string;
+  gpa: string | null;
+  interests: string[];
+  completed_course_ids: number[];
+  onboarding_complete: boolean;
+  interaction_count: number;
+  enrollment_count: number;
+  recommendation_count: number;
+  joined_at: string;
+}
+
+export interface AdminEnrollment {
+  id: number;
+  course_id: number;
+  course_code: string;
+  course_title: string;
+  grade: string | null;
+  completed_at: string | null;
+  semester: string;
+}

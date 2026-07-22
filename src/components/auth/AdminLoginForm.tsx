@@ -3,16 +3,16 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { signIn, getSession } from 'next-auth/react';
+import { signIn, getSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import { loginSchema, LoginFormData } from '@/lib/schemas';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
-export function LoginForm() {
+export function AdminLoginForm() {
   const router = useRouter();
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -25,6 +25,7 @@ export function LoginForm() {
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
     setError('');
+
     const result = await signIn('credentials', {
       email: data.email,
       password: data.password,
@@ -33,20 +34,31 @@ export function LoginForm() {
 
     if (result?.error) {
       setError('Invalid email or password');
-    } else {
-      const session = await getSession();
-      router.push(session?.user?.role === 'admin' ? '/analytics' : '/dashboard');
+      setIsLoading(false);
+      return;
     }
-    setIsLoading(false);
+
+    const session = await getSession();
+    if (session?.user?.role !== 'admin') {
+      await signOut({ redirect: false });
+      setError('Access restricted. This portal is for administrators only.');
+      setIsLoading(false);
+      return;
+    }
+
+    router.push('/analytics');
   };
 
   return (
     <div className="bg-white rounded-xl shadow-md p-8">
-      <h2 className="text-2xl font-bold mb-6">Sign in</h2>
+      <div className="flex items-center gap-2 mb-6">
+        <ShieldCheck className="h-6 w-6 text-primary" />
+        <h2 className="text-2xl font-bold">Admin Sign in</h2>
+      </div>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
-          <Input id="email" type="email" placeholder="you@example.com" {...register('email')} />
+          <Input id="email" type="email" placeholder="admin@example.com" {...register('email')} />
           {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
         </div>
         <div className="space-y-2">
@@ -69,18 +81,18 @@ export function LoginForm() {
           </div>
           {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
         </div>
-        {error && <p className="text-sm text-destructive">{error}</p>}
+        {error && (
+          <div className="rounded-lg bg-destructive/10 border border-destructive/20 px-4 py-3">
+            <p className="text-sm text-destructive">{error}</p>
+          </div>
+        )}
         <Button type="submit" className="w-full" disabled={isLoading}>
-          {isLoading ? 'Signing in...' : 'Sign in'}
+          {isLoading ? 'Signing in...' : 'Sign in to Admin Portal'}
         </Button>
       </form>
       <p className="text-sm text-center text-muted-foreground mt-4">
-        Don&apos;t have an account?{' '}
-        <Link href="/register" className="text-primary hover:underline">Register</Link>
-      </p>
-      <p className="text-sm text-center text-muted-foreground mt-2">
-        Are you staff?{' '}
-        <Link href="/admin/login" className="text-primary hover:underline">Admin portal</Link>
+        Not an admin?{' '}
+        <Link href="/login" className="text-primary hover:underline">Student login</Link>
       </p>
     </div>
   );

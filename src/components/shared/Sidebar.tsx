@@ -6,7 +6,7 @@ import { useUIStore } from '@/store/uiStore';
 import { cn } from '@/lib/utils';
 import {
   LayoutDashboard, BookOpen, User, BarChart2,
-  Settings, ChevronLeft, ChevronRight, GraduationCap, BookMarked,
+  Settings, ChevronLeft, ChevronRight, GraduationCap, BookMarked, Users,
 } from 'lucide-react';
 
 const studentLinks = [
@@ -18,6 +18,7 @@ const studentLinks = [
 
 const adminLinks = [
   { href: '/courses', label: 'Courses', icon: BookOpen },
+  { href: '/students', label: 'Students', icon: Users },
   { href: '/analytics', label: 'Analytics', icon: BarChart2 },
   { href: '/settings', label: 'Settings', icon: Settings },
 ];
