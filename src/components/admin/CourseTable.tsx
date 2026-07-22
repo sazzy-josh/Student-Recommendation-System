@@ -3,16 +3,17 @@
 import { Course } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Ban, CheckCircle2, Edit, FileUp } from 'lucide-react';
+import { Ban, CheckCircle2, Edit, FileUp, Trash2 } from 'lucide-react';
 
 interface CourseTableProps {
   courses: Course[];
   onEdit: (course: Course) => void;
   onUploadSyllabus: (course: Course) => void;
   onToggleActive: (course: Course) => void;
+  onDelete: (course: Course) => void;
 }
 
-export function CourseTable({ courses, onEdit, onUploadSyllabus, onToggleActive }: CourseTableProps) {
+export function CourseTable({ courses, onEdit, onUploadSyllabus, onToggleActive, onDelete }: CourseTableProps) {
   return (
     <div className="bg-white rounded-xl border overflow-hidden">
       <table className="w-full text-sm">
@@ -62,6 +63,15 @@ export function CourseTable({ courses, onEdit, onUploadSyllabus, onToggleActive 
                     ) : (
                       <CheckCircle2 className="h-3 w-3" />
                     )}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onDelete(course)}
+                    title="Delete course"
+                    className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <Trash2 className="h-3 w-3" />
                   </Button>
                 </div>
               </td>

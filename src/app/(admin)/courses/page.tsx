@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
   useCourses,
   useCreateCourse,
@@ -11,6 +11,8 @@ import {
 import { CourseTable } from '@/components/admin/CourseTable';
 import { CourseFormDialog } from '@/components/admin/CourseFormDialog';
 import { SyllabusUpload } from '@/components/courses/SyllabusUpload';
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
+import { Toast } from '@/components/shared/Toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, Search } from 'lucide-react';
@@ -23,12 +25,16 @@ export default function AdminCoursesPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
   const [syllabusCourse, setSyllabusCourse] = useState<Course | null>(null);
+  const [deletingCourse, setDeletingCourse] = useState<Course | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
 
   const { data, isLoading } = useCourses(search ? { search } : {});
   const { data: departments } = useDepartments();
   const createCourse = useCreateCourse();
   const updateCourse = useUpdateCourse();
   const partialUpdateCourse = usePartialUpdateCourse();
+
+  const dismissToast = useCallback(() => setToast(null), []);
 
   const openCreate = () => {
     setEditingCourse(null);
@@ -47,6 +53,19 @@ export default function AdminCoursesPage() {
     } else {
       createCourse.mutate(formData, { onSuccess });
     }
+  };
+
+  const handleDeleteConfirm = () => {
+    if (!deletingCourse) return;
+    partialUpdateCourse.mutate(
+      { id: deletingCourse.id, data: { is_active: false } },
+      {
+        onSuccess: () => {
+          setToast(`"${deletingCourse.title}" has been removed.`);
+          setDeletingCourse(null);
+        },
+      }
+    );
   };
 
   return (
@@ -79,6 +98,7 @@ export default function AdminCoursesPage() {
           onToggleActive={(course) =>
             partialUpdateCourse.mutate({ id: course.id, data: { is_active: !course.is_active } })
           }
+          onDelete={setDeletingCourse}
         />
       )}
 
@@ -96,6 +116,18 @@ export default function AdminCoursesPage() {
         course={syllabusCourse}
         onClose={() => setSyllabusCourse(null)}
       />
+
+      <ConfirmDialog
+        open={!!deletingCourse}
+        title="Delete course?"
+        description={`"${deletingCourse?.title}" will be deactivated and removed from recommendations. This can be re-activated later.`}
+        confirmLabel="Delete"
+        isLoading={partialUpdateCourse.isPending}
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setDeletingCourse(null)}
+      />
+
+      {toast && <Toast message={toast} onClose={dismissToast} />}
     </div>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
-import { use } from 'react';
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { useStudentDetail, useStudentInteractions, useStudentEnrollments } from '@/hooks/useAnalytics';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { Button } from '@/components/ui/button';
@@ -53,9 +53,9 @@ function StatCard({ icon: Icon, label, value, accent }: {
   );
 }
 
-export default function StudentDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
-  const studentId = Number(id);
+export default function StudentDetailPage() {
+  const params = useParams();
+  const studentId = Number(params.id);
 
   const { data: student, isLoading: studentLoading } = useStudentDetail(studentId);
   const { data: interactions, isLoading: interactionsLoading } = useStudentInteractions(studentId);

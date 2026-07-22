@@ -30,7 +30,10 @@ export const courseSchema = z.object({
   title: z.string().min(3).max(255),
   description: z.string().min(20),
   credits: z.number().int().min(1).max(10),
-  department_id: z.number().int().positive(),
+  department_id: z
+    .number({ invalid_type_error: 'Select a department', required_error: 'Select a department' })
+    .int()
+    .positive('Select a department'),
   level: z.string().min(1),
   tags: z.array(z.string()).default([]),
 });
