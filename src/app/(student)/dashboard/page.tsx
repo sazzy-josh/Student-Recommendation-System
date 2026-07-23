@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useRecommendations } from '@/hooks/useRecommendations';
 import { useProfile } from '@/hooks/useProfile';
 import { useEnrollments } from '@/hooks/useEnrollments';
@@ -9,7 +10,35 @@ import { ColdStartBanner } from '@/components/recommendations/ColdStartBanner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { formatRelativeTime } from '@/lib/utils';
-import { RefreshCw, BookOpen, Star, TrendingUp, Clock, GraduationCap } from 'lucide-react';
+import { studentApi } from '@/lib/api';
+import { StudentInteraction } from '@/types';
+import { RefreshCw, BookOpen, Star, TrendingUp, Clock, GraduationCap, MousePointerClick } from 'lucide-react';
+
+function formatTime(seconds: number): string {
+  if (seconds < 60) return `${seconds}s`;
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return s > 0 ? `${m}m ${s}s` : `${m}m`;
+}
+
+function computeImplicitScore(clicks: number, timeSeconds: number): number {
+  const clickScore = Math.min(clicks, 50) / 50;
+  const timeScore = Math.min(timeSeconds, 1800) / 1800;
+  return Math.round((0.3 * clickScore + 0.7 * timeScore) * 1000) / 1000;
+}
+
+function ScoreBar({ score }: { score: number }) {
+  const pct = Math.round(score * 100);
+  const color = pct >= 60 ? 'bg-green-500' : pct >= 30 ? 'bg-yellow-500' : 'bg-gray-400';
+  return (
+    <div className="flex items-center gap-2 min-w-0">
+      <div className="flex-1 bg-muted rounded-full h-1.5">
+        <div className={`${color} h-1.5 rounded-full`} style={{ width: `${pct}%` }} />
+      </div>
+      <span className="text-xs tabular-nums text-muted-foreground w-10 text-right">{score.toFixed(3)}</span>
+    </div>
+  );
+}
 
 function SkeletonCard() {
   return (
@@ -72,6 +101,12 @@ export default function DashboardPage() {
   const profileQuery = useProfile();
   const { query: enrollmentsQuery, enrollMutation, unenrollMutation, enrolledCourseIds } = useEnrollments();
   const [coldStartDismissed, setColdStartDismissed] = useState(false);
+
+  const { data: myInteractions } = useQuery<StudentInteraction[]>({
+    queryKey: ['my-interactions'],
+    queryFn: () => studentApi.getInteractions().then((r) => r.data),
+    staleTime: 60_000,
+  });
 
   const { data, isLoading, error } = query;
   const profile = profileQuery.data;
@@ -217,6 +252,48 @@ export default function DashboardPage() {
           <p className="text-sm text-muted-foreground max-w-xs mx-auto">
             Update your profile with your interests and completed courses to unlock personalised picks.
           </p>
+        </div>
+      )}
+
+      {/* My Course Activity */}
+      {myInteractions && myInteractions.length > 0 && (
+        <div className="mt-8 bg-white rounded-xl border p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <MousePointerClick className="h-4 w-4 text-muted-foreground" />
+            <h2 className="text-base font-semibold">My Course Activity</h2>
+            <span className="ml-auto text-xs text-muted-foreground">
+              Influences your CF recommendations
+            </span>
+          </div>
+          <div className="space-y-3">
+            {[...myInteractions]
+              .sort((a, b) => {
+                if (!a.last_accessed) return 1;
+                if (!b.last_accessed) return -1;
+                return new Date(b.last_accessed).getTime() - new Date(a.last_accessed).getTime();
+              })
+              .slice(0, 8)
+              .map((row) => (
+                <div key={row.id} className="flex items-center gap-3 text-sm">
+                  <div className="min-w-0 flex-1">
+                    <span className="font-mono text-xs text-muted-foreground mr-1.5">{row.course_code}</span>
+                    <span className="font-medium truncate">{row.course_title}</span>
+                  </div>
+                  <div className="flex items-center gap-3 flex-shrink-0 text-xs text-muted-foreground">
+                    <span>{row.clicks} click{row.clicks !== 1 ? 's' : ''}</span>
+                    <span>{formatTime(row.time_spent_seconds)}</span>
+                  </div>
+                  <div className="w-32 flex-shrink-0">
+                    <ScoreBar score={computeImplicitScore(row.clicks, row.time_spent_seconds)} />
+                  </div>
+                </div>
+              ))}
+          </div>
+          {myInteractions.length > 8 && (
+            <p className="text-xs text-muted-foreground mt-3">
+              Showing 8 of {myInteractions.length} courses
+            </p>
+          )}
         </div>
       )}
     </div>

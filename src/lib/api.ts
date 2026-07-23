@@ -108,6 +108,7 @@ export const studentApi = {
   getEnrollments: () => api.get('/students/me/enrollments/'),
   addEnrollment: (courseId: number) => api.post('/students/me/enrollments/', { course: courseId }),
   removeEnrollment: (courseId: number) => api.delete(`/students/me/enrollments/${courseId}/`),
+  getInteractions: () => api.get('/students/me/interactions/'),
   logInteraction: (courseId: number, clicks: number, timeSpent: number) =>
     api.post('/students/me/interactions/', { course_id: courseId, clicks, time_spent_seconds: timeSpent }),
 };

@@ -159,39 +159,74 @@ export default function StudentDetailPage() {
         {interactionsLoading ? (
           <LoadingSpinner />
         ) : !interactions || interactions.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No interactions recorded.</p>
+          <p className="text-sm text-muted-foreground">No interactions recorded yet — interactions are tracked when the student views course detail pages.</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b text-left text-muted-foreground">
-                  <th className="pb-2 font-medium">Course</th>
-                  <th className="pb-2 font-medium text-right">Clicks</th>
-                  <th className="pb-2 font-medium text-right">Time Spent</th>
-                  <th className="pb-2 font-medium text-right">Implicit Score</th>
-                  <th className="pb-2 font-medium">Last Accessed</th>
-                </tr>
-              </thead>
-              <tbody>
-                {interactions.map((row) => (
-                  <tr key={row.id} className="border-b last:border-0">
-                    <td className="py-2.5 pr-4">
-                      <span className="font-medium">{row.course_code}</span>
-                      <span className="text-muted-foreground ml-2">{row.course_title}</span>
-                    </td>
-                    <td className="py-2.5 text-right tabular-nums">{row.clicks}</td>
-                    <td className="py-2.5 text-right tabular-nums">{formatTime(row.time_spent_seconds)}</td>
-                    <td className="py-2.5 text-right">
-                      <ScoreBadge score={computeImplicitScore(row.clicks, row.time_spent_seconds)} />
-                    </td>
-                    <td className="py-2.5 text-muted-foreground text-xs">
-                      {row.last_accessed ? new Date(row.last_accessed).toLocaleString() : '—'}
-                    </td>
+          <>
+            {/* Aggregated summary */}
+            <div className="grid grid-cols-3 gap-3 mb-5">
+              <div className="bg-muted/40 rounded-lg px-3 py-2.5 text-center">
+                <p className="text-xl font-bold tabular-nums">
+                  {interactions.reduce((s, r) => s + r.clicks, 0)}
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">Total Clicks</p>
+              </div>
+              <div className="bg-muted/40 rounded-lg px-3 py-2.5 text-center">
+                <p className="text-xl font-bold">
+                  {formatTime(interactions.reduce((s, r) => s + r.time_spent_seconds, 0))}
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">Total Time</p>
+              </div>
+              <div className="bg-muted/40 rounded-lg px-3 py-2.5 text-center">
+                <p className="text-xl font-bold tabular-nums">
+                  {(
+                    interactions.reduce(
+                      (s, r) => s + computeImplicitScore(r.clicks, r.time_spent_seconds),
+                      0
+                    ) / interactions.length
+                  ).toFixed(3)}
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">Avg Implicit Score</p>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b text-left text-muted-foreground">
+                    <th className="pb-2 font-medium">Course</th>
+                    <th className="pb-2 font-medium text-right">Clicks</th>
+                    <th className="pb-2 font-medium text-right">Time Spent</th>
+                    <th className="pb-2 font-medium text-right">Implicit Score</th>
+                    <th className="pb-2 font-medium">Last Accessed</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {[...interactions]
+                    .sort((a, b) => {
+                      if (!a.last_accessed) return 1;
+                      if (!b.last_accessed) return -1;
+                      return new Date(b.last_accessed).getTime() - new Date(a.last_accessed).getTime();
+                    })
+                    .map((row) => (
+                      <tr key={row.id} className="border-b last:border-0">
+                        <td className="py-2.5 pr-4">
+                          <span className="font-medium">{row.course_code}</span>
+                          <span className="text-muted-foreground ml-2">{row.course_title}</span>
+                        </td>
+                        <td className="py-2.5 text-right tabular-nums">{row.clicks}</td>
+                        <td className="py-2.5 text-right tabular-nums">{formatTime(row.time_spent_seconds)}</td>
+                        <td className="py-2.5 text-right">
+                          <ScoreBadge score={computeImplicitScore(row.clicks, row.time_spent_seconds)} />
+                        </td>
+                        <td className="py-2.5 text-muted-foreground text-xs">
+                          {row.last_accessed ? new Date(row.last_accessed).toLocaleString() : '—'}
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
     </div>

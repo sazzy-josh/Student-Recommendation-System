@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { coursesApi } from '@/lib/api';
 import { CourseDetail, CourseActivity } from '@/types';
+import { useInteractionTracker } from '@/hooks/useInteractionTracker';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -85,6 +86,8 @@ function LoadingState() {
 export default function CourseDetailPage() {
   const params = useParams();
   const id = Number(params.id);
+
+  useInteractionTracker(id || null);
 
   const { data: course, isLoading, error, refetch } = useQuery<CourseDetail>({
     queryKey: ['course', id],
